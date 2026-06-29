@@ -3,29 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weirdcore Eye Screensaver</title>
+    <title>Psychedelic Eye Screensaver</title>
     <style>
         body { 
             background: black; 
             margin: 0; 
             overflow: hidden; 
-            font-family: monospace;
-            color: #ff0000;
         }
         #eye { 
             position: absolute; 
             font-size: 150px; 
             user-select: none; 
             line-height: 1;
-        }
-        /* Weirdcore text elements */
-        #warning-text {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            font-size: 18px;
-            opacity: 0.7;
-            letter-spacing: 2px;
+            filter: drop-shadow(0 0 25px #ff00ff);
         }
         #glitch-overlay {
             position: absolute;
@@ -33,7 +23,7 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 255, 0.06), rgba(0, 255, 255, 0.04), rgba(255, 255, 0, 0.06));
             background-size: 100% 4px, 6px 100%;
             pointer-events: none;
         }
@@ -42,42 +32,81 @@
 <body>
 
 <div id="glitch-overlay"></div>
-<div id="warning-text">IT IS LOOKING FOR THE CORNER...</div>
 <div id="eye">👁️</div>
 
 <script>
   const eye = document.getElementById('eye');
   
-  // Starting positions
-  let x = Math.random() * (window.innerWidth - 150); 
-  let y = Math.random() * (window.innerHeight - 150);
-  
-  // Movement speed (4 pixels per frame)
-  let dx = 4; 
-  let dy = 4;
+  const eyeWidth = 150; 
+  const eyeHeight = 150;
+  const maxX = window.innerWidth - eyeWidth;
+  const maxY = window.innerHeight - eyeHeight;
+
+  let x = 0;
+  let y = 0;
+
+  let bounceCount = 0;
+  let isFrozen = false;
+  let hue = 0;
+
+  // Perfect physics math to force a corner hit exactly on bounce #10
+  let dx = (maxX * 5) / 500;
+  let dy = (maxY * 4) / 500;
 
   function move() {
+    if (isFrozen) return;
+
     x += dx; 
     y += dy;
     
-    // Bounce off left and right screen borders
-    if (x + eye.offsetWidth >= window.innerWidth || x <= 0) {
-        dx = -dx;
-    }
-    // Bounce off top and bottom screen borders
-    if (y + eye.offsetHeight >= window.innerHeight || y <= 0) {
-        dy = -dy;
+    // Psychedelic Color Shifting Loop
+    hue = (hue + 2) % 360; 
+    eye.style.filter = `hue-rotate(${hue}deg) saturate(8) drop-shadow(0 0 30px hsl(${hue}, 100%, 50%))`;
+    
+    let hitWall = false;
+
+    if (x >= maxX) { x = maxX; dx = -dx; hitWall = true; } 
+    else if (x <= 0) { x = 0; dx = -dx; hitWall = true; }
+
+    if (y >= maxY) { y = maxY; dy = -dy; hitWall = true; } 
+    else if (y <= 0) { y = 0; dy = -dy; hitWall = true; }
+
+    if (hitWall) {
+        bounceCount++;
+        
+        // On the 10th move, trigger the final event
+        if (bounceCount >= 10) {
+            x = maxX; 
+            y = maxY;
+            eye.style.left = x + 'px'; 
+            eye.style.top = y + 'px';
+            isFrozen = true;
+            
+            // Rapid Rainbow Flash on hit
+            let flashInterval = setInterval(() => {
+                hue = (hue + 45) % 360;
+                eye.style.filter = `hue-rotate(${hue}deg) saturate(15) brightness(1.2) drop-shadow(0 0 40px hsl(${hue}, 100%, 50%))`;
+            }, 50);
+
+            // Make it Blink Shut after 600ms
+            setTimeout(() => {
+                clearInterval(flashInterval);
+                eye.innerText = "── ──"; 
+                eye.style.fontSize = "80px"; 
+                eye.style.fontWeight = "bold";
+                eye.style.filter = "hue-rotate(300deg) saturate(10) drop-shadow(0 0 35px #ff00ff)";
+            }, 600);
+
+            return;
+        }
     }
     
-    // Move the eye element to the new position
     eye.style.left = x + 'px'; 
     eye.style.top = y + 'px';
-    
-    // Keep running the loop smoothly
     requestAnimationFrame(move);
   }
   
-  move();
+  setTimeout(move, 500);
 </script>
 </body>
 </html>
